@@ -1,0 +1,6 @@
+# Bancos de dados gerados na execucao (recriados a partir dos scripts .sql)
+data/*.db
+
+# Python
+__pycache__/
+*.py[cod]
