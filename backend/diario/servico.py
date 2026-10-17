@@ -148,6 +148,15 @@ class DiarioService:
             cur.execute("SELECT * FROM doenca ORDER BY nome")
             return [Doenca.de_linha(l) for l in cur.fetchall()]
 
+    def cadastrar_doenca(self, nome: str, cid: Optional[str] = None,
+                         impede_doacao: bool = False) -> Doenca:
+        nome = v.obrigatorio(nome, "Nome da doença")
+        with transacao(self.conexao) as cur:
+            cur.execute("""INSERT INTO doenca (nome, cid, impede_doacao)
+                           VALUES (%s, %s, %s) RETURNING *""",
+                        (nome, v.opcional(cid), bool(impede_doacao)))
+            return Doenca.de_linha(cur.fetchone())
+
     def registrar_diagnostico(self, usuario_id: int, doenca_id: int,
                               data_diagnostico, status: str = "ativa") -> Diagnostico:
         data = v.nao_futura(v.para_data(data_diagnostico, "Data do diagnóstico"),
@@ -171,6 +180,16 @@ class DiarioService:
             cur.execute(self._SELECT_DIAGNOSTICO + " WHERE ud.id = %s", (diagnostico_id,))
             return Diagnostico.de_linha(cur.fetchone())
 
+    def atualizar_gravidade_alergia(self, alergia_id: int, gravidade: str) -> Alergia:
+        gravidade = v.validar_gravidade(gravidade)
+        with transacao(self.conexao) as cur:
+            cur.execute("""UPDATE alergia SET gravidade = %s WHERE id = %s
+                           RETURNING *""", (gravidade, alergia_id))
+            linha = cur.fetchone()
+        if linha is None:
+            raise NaoEncontrado(f"Alergia {alergia_id} não encontrada.")
+        return Alergia.de_linha(linha)
+
     def listar_diagnosticos(self, usuario_id: int) -> list[Diagnostico]:
         with transacao(self.conexao) as cur:
             cur.execute(self._SELECT_DIAGNOSTICO +
@@ -186,6 +205,14 @@ class DiarioService:
         with transacao(self.conexao) as cur:
             cur.execute("SELECT * FROM vacina ORDER BY nome")
             return [Vacina.de_linha(l) for l in cur.fetchall()]
+
+    def cadastrar_vacina(self, nome: str, fabricante: Optional[str] = None) -> Vacina:
+        nome = v.obrigatorio(nome, "Nome da vacina")
+        with transacao(self.conexao) as cur:
+            cur.execute("""INSERT INTO vacina (nome, fabricante)
+                           VALUES (%s, %s) RETURNING *""",
+                        (nome, v.opcional(fabricante)))
+            return Vacina.de_linha(cur.fetchone())
 
     def registrar_vacina(self, usuario_id: int, vacina_id: int, data_aplicacao,
                          dose: str, lote: Optional[str] = None) -> AplicacaoVacina:
@@ -222,6 +249,15 @@ class DiarioService:
                         (usuario_id,))
             return [Consulta.de_linha(l) for l in cur.fetchall()]
 
+    def atualizar_consulta(self, consulta_id: int, observacoes: Optional[str]) -> Consulta:
+        with transacao(self.conexao) as cur:
+            cur.execute("""UPDATE consulta SET observacoes = %s WHERE id = %s
+                           RETURNING *""", (v.opcional(observacoes), consulta_id))
+            linha = cur.fetchone()
+        if linha is None:
+            raise NaoEncontrado(f"Consulta {consulta_id} não encontrada.")
+        return Consulta.de_linha(linha)
+
     def registrar_exame(self, usuario_id: int, tipo: str, data, resultado=None,
                         consulta_id: Optional[int] = None) -> Exame:
         data = v.nao_futura(v.para_data(data, "Data do exame"), "Data do exame")
@@ -243,6 +279,16 @@ class DiarioService:
         with transacao(self.conexao) as cur:
             cur.execute("SELECT * FROM exame WHERE usuario_id = %s ORDER BY data", (usuario_id,))
             return [Exame.de_linha(l) for l in cur.fetchall()]
+
+    def atualizar_resultado_exame(self, exame_id: int, resultado: str) -> Exame:
+        resultado = v.obrigatorio(resultado, "Resultado")
+        with transacao(self.conexao) as cur:
+            cur.execute("""UPDATE exame SET resultado = %s WHERE id = %s
+                           RETURNING *""", (resultado, exame_id))
+            linha = cur.fetchone()
+        if linha is None:
+            raise NaoEncontrado(f"Exame {exame_id} não encontrado.")
+        return Exame.de_linha(linha)
 
     def registrar_metrica(self, usuario_id: int, tipo: str, valor, unidade: str,
                           data_hora=None) -> Metrica:

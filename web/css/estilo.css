@@ -1,0 +1,227 @@
+/* ========================================================================
+   Gestao Hospitalar - front web
+   ======================================================================== */
+:root {
+  --fundo: #f1f4f6;
+  --superficie: #ffffff;
+  --borda: #d6dee3;
+  --destaque: #1f6f8b;
+  --destaque-escuro: #175466;
+  --texto: #23323a;
+  --texto-suave: #5b6b74;
+  --alerta: #b3261e;
+  --alerta-fundo: #fdecea;
+  --ok: #1f7a4d;
+  --aviso: #8a5a00;
+  --aviso-fundo: #fff6e0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  font-size: 14px;
+}
+
+/* ---------------------------------------------------------------- topo */
+.topo {
+  background: var(--destaque);
+  color: #fff;
+  padding: 18px 24px 0;
+}
+.topo-conteudo h1 { margin: 0; font-size: 22px; }
+.topo-conteudo p { margin: 4px 0 14px; color: #cfe3ea; font-size: 13px; }
+
+.abas-principais { display: flex; gap: 4px; }
+.abas-principais .aba {
+  background: rgba(255,255,255,.14);
+  color: #eaf4f7;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-size: 14px;
+}
+.abas-principais .aba:hover { background: rgba(255,255,255,.26); }
+.abas-principais .aba.ativa {
+  background: var(--fundo);
+  color: var(--destaque-escuro);
+  font-weight: 600;
+}
+
+main { padding: 18px 24px 40px; max-width: 1500px; margin: 0 auto; }
+
+.secao { display: none; }
+.secao.ativa { display: block; }
+
+/* ------------------------------------------------------------- cartoes */
+.cartoes { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.cartao {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 12px 18px;
+  min-width: 120px;
+  flex: 1 1 120px;
+}
+.cartao .valor { font-size: 24px; font-weight: 700; color: var(--destaque); }
+.cartao .rotulo { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
+.cartao.destaque .valor { color: var(--alerta); }
+
+/* -------------------------------------------------------------- paineis */
+.painel {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.painel h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--destaque-escuro);
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.nota { color: var(--texto-suave); font-size: 12.5px; margin: 0 0 10px; }
+.nota code {
+  background: #eef2f4; padding: 1px 5px; border-radius: 4px;
+  font-size: 12px; color: var(--destaque-escuro);
+}
+
+.colunas { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+.grade-dois { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 1100px) {
+  .colunas, .grade-dois { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------- abas internas */
+.abas-internas {
+  display: flex; flex-wrap: wrap; gap: 2px;
+  border-bottom: 2px solid var(--borda);
+  margin: 10px 0 14px;
+}
+.aba-interna {
+  background: transparent; border: none; cursor: pointer;
+  padding: 9px 14px; font-size: 13.5px; color: var(--texto-suave);
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+}
+.aba-interna:hover { color: var(--destaque); }
+.aba-interna.ativa {
+  color: var(--destaque-escuro); font-weight: 600;
+  border-bottom-color: var(--destaque);
+}
+.painel-interno { display: none; }
+.painel-interno.ativo { display: block; }
+
+/* -------------------------------------------------------------- tabelas */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  text-align: left; padding: 8px 10px;
+  background: #eef2f4; color: var(--destaque-escuro);
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px;
+  border-bottom: 1px solid var(--borda); white-space: nowrap;
+}
+tbody td {
+  padding: 7px 10px; border-bottom: 1px solid #edf1f3; vertical-align: top;
+}
+tbody tr:nth-child(even) { background: #fafcfd; }
+tbody tr.clicavel { cursor: pointer; }
+tbody tr.clicavel:hover { background: #e6f1f5; }
+tbody tr.selecionada { background: #d8e9f0 !important; }
+tbody tr.urgente td { color: var(--alerta); font-weight: 600; }
+.tabela-rolagem { max-height: 440px; overflow-y: auto; }
+.tabela-rolagem td { word-break: normal; }
+.tabela-rolagem thead th { padding: 7px 8px; }
+.tabela-rolagem td:nth-child(2) { min-width: 130px; }
+.vazio { color: var(--texto-suave); font-style: italic; padding: 10px 0; margin: 0; }
+
+.etiqueta {
+  display: inline-block; padding: 1px 8px; border-radius: 10px;
+  font-size: 11.5px; font-weight: 600;
+}
+.etiqueta.vermelha { background: var(--alerta-fundo); color: var(--alerta); }
+.etiqueta.verde { background: #e7f5ee; color: var(--ok); }
+.etiqueta.amarela { background: var(--aviso-fundo); color: var(--aviso); }
+.etiqueta.cinza { background: #eef2f4; color: var(--texto-suave); }
+
+/* -------------------------------------------------------------- botoes */
+.btn {
+  background: var(--destaque); color: #fff; border: none;
+  padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.btn:hover { background: var(--destaque-escuro); }
+.btn.secundario { background: #e4eaed; color: var(--destaque-escuro); }
+.btn.secundario:hover { background: #d3dde2; }
+.btn.pequeno { padding: 4px 10px; font-size: 12px; }
+.acoes { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.busca { display: flex; gap: 6px; margin-bottom: 10px; }
+.busca input { flex: 1; }
+
+input, select, textarea {
+  font-family: inherit; font-size: 13px; padding: 7px 9px;
+  border: 1px solid var(--borda); border-radius: 6px;
+  background: #fff; color: var(--texto); width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid #bcd9e4; border-color: var(--destaque);
+}
+textarea { min-height: 60px; resize: vertical; }
+
+.linha-form {
+  display: flex; gap: 10px; align-items: flex-end;
+  flex-wrap: wrap; margin-bottom: 12px;
+}
+.linha-form label { font-size: 12px; color: var(--texto-suave); }
+.linha-form select { min-width: 200px; }
+.linha-form > select { max-width: 620px; }
+
+/* --------------------------------------------------------------- ficha */
+.ficha { border-left: 3px solid var(--destaque); padding: 4px 0 4px 12px; }
+.ficha h3 { margin: 0 0 6px; font-size: 17px; }
+.ficha dl {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 4px 16px; margin: 0;
+}
+.ficha dt { font-size: 11px; color: var(--texto-suave); text-transform: uppercase; }
+.ficha dd { margin: 0 0 6px; font-size: 13.5px; }
+
+.alerta {
+  background: var(--alerta-fundo); color: var(--alerta);
+  border: 1px solid #f3c2bd; border-radius: 6px;
+  padding: 9px 12px; margin: 10px 0; font-size: 13px; font-weight: 600;
+}
+
+/* --------------------------------------------------------------- modal */
+.modal {
+  position: fixed; inset: 0; background: rgba(23,42,52,.5);
+  display: flex; align-items: center; justify-content: center; z-index: 50;
+  padding: 20px;
+}
+.modal-caixa {
+  background: var(--superficie); border-radius: 10px; padding: 20px 22px;
+  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 18px 50px rgba(0,0,0,.25);
+}
+.modal-caixa h2 { margin: 0 0 14px; font-size: 17px; color: var(--destaque-escuro); }
+.modal-caixa label { display: block; margin-bottom: 11px; }
+.modal-caixa label span {
+  display: block; font-size: 12px; color: var(--texto-suave); margin-bottom: 3px;
+}
+.modal-acoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+/* --------------------------------------------------------------- aviso */
+.aviso {
+  position: fixed; right: 20px; bottom: 20px; z-index: 60;
+  background: var(--texto); color: #fff;
+  padding: 11px 16px; border-radius: 8px; font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: 360px;
+}
+.aviso.erro { background: var(--alerta); }
+.aviso.ok { background: var(--ok); }
+
+.oculto { display: none !important; }

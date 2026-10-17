@@ -2,11 +2,21 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 os.environ["DIARIO_DB"] = "diario_saude_teste"
 os.environ["CENTRAL_DB"] = "central_transplantes_teste"
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import pytest
+from backend import conexao as _conexao
+
+for _prefixo in ("DIARIO", "CENTRAL"):
+    for _chave in ("PGHOST", "PGPORT", "PGUSER", "PGPASSWORD", "PGSSLMODE"):
+        _valor = os.getenv(_chave)
+        if _valor:
+            os.environ[f"{_prefixo}_{_chave}"] = _valor
+        else:
+            os.environ.pop(f"{_prefixo}_{_chave}", None)
 
 from backend.erros import ErroDeConexao
 

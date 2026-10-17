@@ -28,13 +28,26 @@ BANCO_CENTRAL = os.getenv("CENTRAL_DB", "central_transplantes")
 
 
 def conectar(nome_banco: str, somente_leitura: bool = False):
+    return _conectar(nome_banco, somente_leitura)
+
+
+def _conectar(nome_banco: str, somente_leitura: bool = False,
+              prefixo: str | None = None):
+    def configuracao(chave: str, padrao: str) -> str:
+        if prefixo:
+            valor = os.getenv(f"{prefixo}_{chave}")
+            if valor:
+                return valor
+        return os.getenv(chave, padrao)
+
     try:
         conexao = psycopg2.connect(
             dbname=nome_banco,
-            host=os.getenv("PGHOST", "localhost"),
-            port=os.getenv("PGPORT", "5432"),
-            user=os.getenv("PGUSER", "postgres"),
-            password=os.getenv("PGPASSWORD"),
+            host=configuracao("PGHOST", "127.0.0.1"),
+            port=configuracao("PGPORT", "5432"),
+            user=configuracao("PGUSER", "postgres"),
+            password=configuracao("PGPASSWORD", ""),
+            sslmode=configuracao("PGSSLMODE", "prefer"),
             client_encoding="UTF8",
             cursor_factory=psycopg2.extras.RealDictCursor,
         )
@@ -50,8 +63,8 @@ def conectar(nome_banco: str, somente_leitura: bool = False):
 
 
 def conectar_diario(somente_leitura: bool = False):
-    return conectar(BANCO_DIARIO, somente_leitura)
+    return _conectar(BANCO_DIARIO, somente_leitura, "DIARIO")
 
 
 def conectar_central():
-    return conectar(BANCO_CENTRAL)
+    return _conectar(BANCO_CENTRAL, prefixo="CENTRAL")

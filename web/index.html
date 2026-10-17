@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestao Hospitalar - Diario de Saude e Central de Transplantes</title>
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-conteudo">
+    <h1>Gestao Hospitalar</h1>
+    <p></p>
+  </div>
+  <nav class="abas-principais" id="navPrincipal">
+    <button class="aba ativa" data-secao="diario">Diario de Saude</button>
+    <button class="aba" data-secao="central">Central de Transplantes</button>
+    <button class="aba" data-secao="integracao">Integracao</button>
+  </nav>
+</header>
+
+<main>
+  <!-- =================================================== DIARIO -->
+  <section id="secao-diario" class="secao ativa">
+    <div class="cartoes" id="cartoesDiario"></div>
+
+    <div class="colunas">
+      <aside class="painel">
+        <h2>Usuarios</h2>
+        <div class="busca">
+          <input type="search" id="buscaUsuario" placeholder="Nome ou CPF">
+          <button class="btn" id="btnBuscar">Buscar</button>
+          <button class="btn secundario" id="btnLimparBusca">Limpar</button>
+        </div>
+        <div class="tabela-rolagem" id="listaUsuarios"></div>
+        <div class="acoes">
+          <button class="btn" data-form="usuario">Novo usuario</button>
+        </div>
+      </aside>
+
+      <div class="painel conteudo">
+        <div id="fichaUsuario" class="ficha">
+          <p class="vazio">Selecione um usuario na lista.</p>
+        </div>
+
+        <nav class="abas-internas" id="abasDiario">
+          <button class="aba-interna ativa" data-painel="timeline">Linha do tempo</button>
+          <button class="aba-interna" data-painel="alergias">Alergias</button>
+          <button class="aba-interna" data-painel="doencas">Doencas</button>
+          <button class="aba-interna" data-painel="consultas">Consultas</button>
+          <button class="aba-interna" data-painel="exames">Exames</button>
+          <button class="aba-interna" data-painel="vacinas">Vacinas</button>
+          <button class="aba-interna" data-painel="metricas">Metricas</button>
+          <button class="aba-interna" data-painel="relatorios">Relatorios</button>
+        </nav>
+
+        <div class="painel-interno ativo" id="painel-timeline"></div>
+        <div class="painel-interno" id="painel-alergias"></div>
+        <div class="painel-interno" id="painel-doencas"></div>
+        <div class="painel-interno" id="painel-consultas"></div>
+        <div class="painel-interno" id="painel-exames"></div>
+        <div class="painel-interno" id="painel-vacinas"></div>
+        <div class="painel-interno" id="painel-metricas"></div>
+        <div class="painel-interno" id="painel-relatorios"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================== CENTRAL -->
+  <section id="secao-central" class="secao">
+    <div class="cartoes" id="cartoesCentral"></div>
+
+    <nav class="abas-internas" id="abasCentral">
+      <button class="aba-interna ativa" data-painel="compatibilidade">Compatibilidade</button>
+      <button class="aba-interna" data-painel="orgaos">Orgaos</button>
+      <button class="aba-interna" data-painel="fila">Fila de espera</button>
+      <button class="aba-interna" data-painel="doadores">Doadores</button>
+      <button class="aba-interna" data-painel="receptores">Receptores</button>
+      <button class="aba-interna" data-painel="transplantes">Transplantes</button>
+      <button class="aba-interna" data-painel="painel-central">Indicadores</button>
+    </nav>
+
+    <div class="painel-interno ativo" id="painel-compatibilidade">
+      <div class="painel">
+        <h2>Buscar receptores compativeis</h2>
+        <p class="nota">Criterio: mesmo tipo de orgao e compatibilidade ABO.
+           Ordem de alocacao: emergencia, alta, normal e maior tempo de espera.</p>
+        <div class="linha-form">
+          <select id="seletorOrgao"></select>
+          <button class="btn secundario" id="btnRegras">Ver regras</button>
+        </div>
+        <div id="alertaOrgao" class="alerta oculto"></div>
+        <div id="tabelaCompativeis"></div>
+      </div>
+      <div class="painel">
+        <h2>Todos os cruzamentos compativeis</h2>
+        <div id="tabelaCruzamentos"></div>
+      </div>
+    </div>
+
+    <div class="painel-interno" id="painel-orgaos">
+      <div class="painel">
+        <div class="linha-form">
+          <label>Status
+            <select id="filtroStatusOrgao"></select>
+          </label>
+          <button class="btn" data-form="orgao">Registrar orgao captado</button>
+        </div>
+        <div id="tabelaOrgaos"></div>
+      </div>
+    </div>
+
+    <div class="painel-interno" id="painel-fila">
+      <div class="painel">
+        <div class="linha-form">
+          <label>Situacao
+            <select id="filtroStatusFila"></select>
+          </label>
+          <button class="btn" data-form="fila">Inserir receptor na fila</button>
+        </div>
+        <div id="tabelaFila"></div>
+      </div>
+    </div>
+
+    <div class="painel-interno" id="painel-doadores">
+      <div class="painel">
+        <div class="linha-form">
+          <button class="btn" data-form="doador">Cadastrar doador</button>
+        </div>
+        <div id="tabelaDoadores"></div>
+      </div>
+    </div>
+
+    <div class="painel-interno" id="painel-receptores">
+      <div class="painel">
+        <div class="linha-form">
+          <button class="btn" data-form="receptor">Cadastrar receptor</button>
+        </div>
+        <div id="tabelaReceptores"></div>
+      </div>
+    </div>
+
+    <div class="painel-interno" id="painel-transplantes">
+      <div class="painel">
+        <h2>Transplantes realizados</h2>
+        <div id="tabelaTransplantes"></div>
+      </div>
+    </div>
+
+    <div class="painel-interno" id="painel-painel-central">
+      <div class="grade-dois">
+        <div class="painel">
+          <h2>Demanda por tipo de orgao</h2>
+          <div id="tabelaDemanda"></div>
+        </div>
+        <div class="painel">
+          <h2>Candidatos compativeis por orgao</h2>
+          <div id="tabelaCandidatos"></div>
+        </div>
+        <div class="painel">
+          <h2>Receptores sem opcao compativel hoje</h2>
+          <div id="tabelaSemCompativel"></div>
+        </div>
+        <div class="painel">
+          <h2>Transplantes por hospital</h2>
+          <div id="tabelaHospitais"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================== INTEGRACAO -->
+  <section id="secao-integracao" class="secao">
+    <div class="cartoes" id="cartoesIntegracao"></div>
+
+    <div class="painel">
+      <h2>Integração entre os bancos</h2>
+      <p class="nota">A Central mantém o identificador do usuário e consulta o
+        Diário por um gateway somente de leitura. Tipagem e dados clínicos não
+        são duplicados na Central; por isso a conferência mostra o vínculo, não
+        divergências entre cópias.</p>
+    </div>
+
+    <div class="grade-dois">
+      <div class="painel">
+        <h2>Usuarios do Diario de Saude</h2>
+        <p class="nota">Clique em um usuario para ver com quais receptores da
+           fila ele seria compativel.</p>
+        <div id="tabelaUsuariosDiario"></div>
+      </div>
+      <div class="painel">
+        <h2>Conferencia Central x Diario</h2>
+        <div id="tabelaConferencia"></div>
+      </div>
+    </div>
+
+    <div class="painel">
+      <h2>Alertas: órgãos de doadores com impedimento no Diário</h2>
+      <p class="nota">A Central bloqueia a captação de órgãos quando o Diário
+         registra doença ativa com <code>impede_doacao = 1</code>.</p>
+      <div id="tabelaAlertas"></div>
+    </div>
+
+    <div class="painel" id="painelCompatUsuario"></div>
+  </section>
+</main>
+
+<div class="modal oculto" id="modal">
+  <div class="modal-caixa">
+    <h2 id="modalTitulo"></h2>
+    <form id="modalFormulario"></form>
+    <div class="modal-acoes">
+      <button class="btn secundario" id="btnCancelar">Cancelar</button>
+      <button class="btn" id="btnSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="aviso" class="aviso oculto"></div>
+
+<script src="js/api.js"></script>
+<script src="js/componentes.js"></script>
+<script src="js/diario.js"></script>
+<script src="js/central.js"></script>
+<script src="js/integracao.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

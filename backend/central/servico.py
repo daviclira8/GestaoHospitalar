@@ -62,6 +62,44 @@ class CentralService:
             linha = cur.fetchone()
         return Receptor.de_linha(linha) if linha else None
 
+    def listar_receptores(self) -> list[Receptor]:
+        with transacao(self.conexao) as cur:
+            cur.execute("SELECT * FROM receptor ORDER BY id")
+            receptores = [Receptor.de_linha(l) for l in cur.fetchall()]
+        pessoas = self.diario.pessoas(r.usuario_id for r in receptores)
+        for receptor in receptores:
+            pessoa = pessoas.get(receptor.usuario_id)
+            receptor.nome = pessoa.nome if pessoa else "(fora do Diário)"
+        return receptores
+
+    def listar_orgaos(self, status: Optional[str] = None) -> list[dict]:
+        with transacao(self.conexao) as cur:
+            consulta = """
+                SELECT od.id, od.status, od.doador_id, d.usuario_id AS doador_usuario_id,
+                       d.tipo AS tipo_doador, od.tipo_orgao_id, t.nome AS orgao,
+                       od.hospital_id, h.nome AS hospital, od.data_hora_captacao AS data_captacao,
+                       t.tempo_max_isquemia_horas AS isquemia_h,
+                       EXTRACT(EPOCH FROM (NOW() - od.data_hora_captacao)) / 3600
+                           AS horas_decorridas
+                  FROM orgao_disponivel od
+                  JOIN doador d ON d.id = od.doador_id
+                  JOIN tipo_orgao t ON t.id = od.tipo_orgao_id
+                  JOIN hospital h ON h.id = od.hospital_id
+            """
+            if status is not None:
+                consulta += " WHERE od.status = %s"
+                parametros = (status,)
+            else:
+                parametros = ()
+            cur.execute(consulta + " ORDER BY od.id", parametros)
+            orgaos = [dict(l) for l in cur.fetchall()]
+        pessoas = self.diario.pessoas(o["doador_usuario_id"] for o in orgaos)
+        for orgao in orgaos:
+            pessoa = pessoas.get(orgao["doador_usuario_id"])
+            orgao["doador"] = pessoa.nome if pessoa else "(fora do Diário)"
+            orgao["sangue"] = pessoa.sangue if pessoa else None
+        return orgaos
+
     def incluir_na_fila(self, receptor_id: int, tipo_orgao_id: int, urgencia: int) -> EntradaFila:
         urgencia = self._validar_urgencia(urgencia)
         with transacao(self.conexao) as cur:
