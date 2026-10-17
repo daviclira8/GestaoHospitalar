@@ -1,145 +1,127 @@
-# Gestao Hospitalar
+# Diário de Saúde + Central de Transplantes
 
-Trabalho de Banco de Dados com dois sistemas relacionais independentes:
+Desafio de Tecnologia RAITec 2026.2. São dois sistemas integrados, cada um com o seu **próprio banco PostgreSQL**:
 
-1. **Diario de Saude Pessoal** - historico de saude do usuario (tipo sanguineo,
-   fator RH, alergias, consultas, exames e vacinas).
-2. **Central Hospitalar de Transplantes** - doadores, receptores, orgaos
-   disponiveis, filas de espera e identificacao de compatibilidades.
+- **Diário de Saúde Pessoal** (`diario_saude`): histórico clínico do usuário.
+- **Central Hospitalar de Transplantes e Doação de Órgãos e Sangue** (`central_transplantes`): doadores, receptores, fila, órgãos, alocações e bolsas de sangue.
 
-Cada sistema pode ser usado por **menus interativos de terminal** ou pela
-**interface grafica em Python (Tkinter)**.
-
-- **SGBD:** SQLite 3 (embutido no Python, nao precisa de servidor)
-- **Linguagem:** Python 3 (apenas biblioteca padrao)
-- **Modelagem (DER/MER):** [docs/DER.md](docs/DER.md)
-
----
-
-## Como executar
-
-Nao ha dependencias para instalar. Na raiz do projeto:
-
-```bash
-python3 main.py
-```
-
-O menu inicial permite abrir os menus de terminal dos dois sistemas, a
-interface grafica ou apenas criar/verificar os bancos.
-
-Tambem e possivel iniciar cada parte diretamente:
-
-```bash
-python3 DiarioPessoal/DiarioPessoal.py        # menus do Sistema 1 (terminal)
-python3 CentralHospitalar/CentralHospitalar.py # menus do Sistema 2 (terminal)
-python3 gui.py                                 # interface grafica (Tkinter)
-```
-
-Na primeira execucao os bancos sao criados automaticamente em `data/`,
-executando os scripts SQL e carregando os dados ficticios.
-
----
+A Central se liga ao Diário **apenas pelo `usuario_id`**. Ela lê do Diário o nome, o tipo sanguíneo e as doenças no momento em que precisa, e nunca grava no Diário.
 
 ## Estrutura
 
 ```
-GestaoHospitalar/
-├── main.py                         menu inicial do projeto
-├── gui.py                          interface grafica (as duas abas)
-├── core/
-│   ├── db.py                       conexao, criacao e execucao de SQL
-│   ├── ui.py                       menus, leitura validada e tabelas (terminal)
-│   └── widgets.py                  tabela e formulario reutilizaveis (Tkinter)
-├── DiarioPessoal/
-│   ├── bdDiarioPessoal.sql         DDL + INSERTs + exemplos de consulta
-│   ├── repositorio.py              todo o SQL do Sistema 1
-│   ├── DiarioPessoal.py            menus de terminal
-│   └── interface.py                aba grafica
-├── CentralHospitalar/
-│   ├── bdCentralHospitalar.sql     DDL + INSERTs + views + exemplos
-│   ├── repositorio.py              todo o SQL do Sistema 2
-│   ├── CentralHospitalar.py        menus de terminal
-│   └── interface.py                aba grafica
-├── docs/DER.md                     diagramas entidade-relacionamento
-└── data/                           bancos .db gerados (criado na execucao)
+sql/                         PARTE 2 — bancos de dados
+  diario/01_criacao.sql        tabelas, ENUMs, restrições, índices, views
+  diario/02_povoamento.sql     20 usuários fictícios + histórico
+  diario/03_operacoes.sql      consultas e INSERT/UPDATE/DELETE de exemplo
+  central/01_criacao.sql       tabelas, regras ABO, funções, gatilho, views
+  central/02_povoamento.sql    hospitais, órgãos, doadores, filas, bolsas
+  central/03_operacoes.sql     consultas e fluxo completo de uma doação
+  integracao/04_integracao_fdw.sql   (opcional) integração só com SQL
+  executar_tudo.bat / .sh      cria os bancos usando o psql
+
+backend/                     BACKEND em Python
+  conexao.py                   conexão com os 2 bancos (lê o .env)
+  erros.py                     exceções + tradução dos erros do banco + transações
+  base.py                      conversão linha do banco -> objeto
+  diario/                      INTEGRANTE 2
+    modelos.py                   estruturas de dados (dataclasses)
+    validacao.py                 validação dos dados de entrada
+    servico.py                   DiarioService: CRUD completo
+  central/                     INTEGRANTE 3
+    compatibilidade.py           ALGORITMO de compatibilidade (puro, sem banco)
+    integracao_diario.py         DiarioGateway: leitura do Diário (somente leitura)
+    modelos.py                   estruturas de dados
+    servico.py                   CentralService: cadastros, seleção, alocação, sangue
+
+criar_bancos.py              recria os 2 bancos via Python (não precisa do psql)
+demo_backend.py              roteiro da demonstração (manual de uso do backend)
+tests/                       41 testes automatizados (pytest)
 ```
 
-O SQL fica concentrado nos arquivos `repositorio.py` de cada sistema; o
-terminal e a interface grafica consomem as mesmas funcoes, sem duplicar
-consultas.
+## Como rodar (Windows)
 
----
+**Pré-requisitos:** Python 3.10 ou superior e PostgreSQL 14 ou superior.
 
-## Sistema 1 - Diario de Saude Pessoal
+```bat
+cd caminho\da\pasta\desafio_saude
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.exemplo .env
+```
 
-**Tabelas:** `usuario`, `profissional`, `alergia`, `usuario_alergia` (N:N),
-`vacina`, `consulta`, `exame`, `vacinacao`.
+Abra o `.env` e coloque a senha do usuário `postgres` em `PGPASSWORD`. Depois:
 
-**Menus de terminal:** Usuarios, Alergias, Consultas, Exames, Vacinas,
-Relatorios e Manutencao do banco.
+```bat
+python criar_bancos.py          :: cria e povoa os 2 bancos
+python demo_backend.py          :: demonstração completa (recria os bancos antes)
+python demo_backend.py --pausar :: idem, parando a cada passo (para apresentar)
+python -m pytest -q             :: roda os testes (usa bancos *_teste separados)
+```
 
-**Interface grafica:** lista de usuarios a esquerda e, a direita, as abas
-Linha do tempo, Alergias, Consultas, Exames, Vacinas e Relatorios do usuario
-selecionado.
+No Linux ou macOS, os comandos são os mesmos. Troque `.venv\Scripts\activate` por `source .venv/bin/activate` e `copy` por `cp`.
 
-Operacoes demonstradas:
+## Arquitetura
 
-- **Insercao:** novo usuario, consulta, exame, dose de vacina, alergia do
-  usuario, profissional.
-- **Consulta:** ficha completa, historico por usuario, linha do tempo unindo
-  consultas/exames/vacinas (`UNION ALL`), alergias graves, exames pendentes,
-  esquemas vacinais incompletos (`GROUP BY` + `HAVING`), distribuicao por tipo
-  sanguineo.
-- **Atualizacao:** contato, correcao de tipo sanguineo/RH, diagnostico da
-  consulta, lancamento de resultado de exame (passa a `CONCLUIDO`), gravidade
-  de alergia.
+```
+           CLI (Integrante 4)
+              │          │
+     DiarioService    CentralService ── compatibilidade.py (algoritmo puro)
+              │          │
+              │     DiarioGateway (somente leitura)
+              │          │
+       [diario_saude] ◄──┘        [central_transplantes]
+```
 
-## Sistema 2 - Central Hospitalar de Transplantes
+- **Toda operação é uma transação.** Ou grava tudo, ou nada (`erros.transacao`).
+- **Todo SQL é parametrizado** (`%s`), o que protege contra SQL injection.
+- **Toda falha prevista vira `ErroDeNegocio`**, com uma mensagem pronta para mostrar ao usuário.
+- **Validação em duas camadas.** O Python valida para dar uma mensagem clara, e o banco (CHECK, ENUM, UNIQUE, FK, gatilho) é a garantia final.
 
-**Tabelas:** `hospital`, `tipo_orgao`, `doador`, `receptor`,
-`orgao_disponivel`, `fila_espera`, `transplante`, `compat_abo`, `compat_rh`.
-**Views:** `vw_compatibilidade`, `vw_fila_detalhada`.
+## Seleção de receptores (`compatibilidade.py`)
 
-**Menus de terminal:** Doadores, Receptores, Orgaos, Fila de espera,
-Compatibilidade, Transplantes, Painel/Relatorios e Manutencao.
+1. **Tipagem:** o receptor precisa ter tipo sanguíneo registrado no Diário.
+2. **ABO:** O→todos · A→A, AB · B→B, AB · AB→AB. Em órgãos sólidos, o Rh não é critério.
+3. **Logística:** 1 h de preparo + deslocamento (terrestre a 60 km/h até 150 km; aéreo a 400 km/h acima disso). O resultado precisa ser menor ou igual ao tempo de isquemia restante.
+4. **Ordem de prioridade:** urgência ↓ → mesmo tipo sanguíneo → dias de espera ↓ → distância ↑.
 
-**Interface grafica:** abas Painel, Compatibilidade, Orgaos, Fila de espera,
-Doadores, Receptores e Transplantes.
+Na **transfusão de sangue**, vale ABO **+ Rh**: um receptor Rh- só recebe Rh-. A **triagem do doador de sangue** usa idade (16–69 anos), peso (≥ 50 kg, da última métrica do Diário), intervalo desde a última doação (60 dias para homens, 90 para mulheres) e doenças que impedem a doação.
 
-Operacoes demonstradas:
+## Métodos para a CLI (Integrante 4)
 
-- **Insercao:** doador, receptor, orgao captado, entrada na fila, transplante.
-- **Consulta:** orgaos disponiveis com tempo decorrido x tempo de isquemia,
-  fila ordenada por prioridade e tempo de espera, **receptores compativeis com
-  um orgao**, quantidade de candidatos por orgao, receptores sem nenhuma opcao
-  compativel (`NOT IN`), indicadores do painel, transplantes por hospital.
-- **Atualizacao:** status do orgao, prioridade e situacao na fila, desfecho do
-  transplante.
+| Diário (`DiarioService`) | Central (`CentralService`) |
+|---|---|
+| `cadastrar_usuario`, `buscar_usuario`, `buscar_por_cpf`, `listar_usuarios` | `listar_hospitais`, `listar_tipos_orgao` |
+| `atualizar_usuario`, `registrar_tipagem`, `excluir_usuario` | `cadastrar_receptor`, `incluir_na_fila`, `atualizar_urgencia`, `remover_da_fila`, `fila_ativa` |
+| `adicionar_alergia`, `listar_alergias`, `remover_alergia` | `cadastrar_doador`, `listar_doadores`, `reavaliar_doadores` |
+| `listar_catalogo_doencas`, `registrar_diagnostico`, `atualizar_status_doenca`, `listar_diagnosticos` | `registrar_orgao`, `orgaos_disponiveis` |
+| `listar_catalogo_vacinas`, `registrar_vacina`, `cartao_vacinacao` | `selecionar_receptores`, `alocar_orgao`, `alocar_melhor_receptor` |
+| `registrar_consulta`, `listar_consultas`, `registrar_exame`, `listar_exames` | `registrar_entrega`, `concluir_transplante`, `cancelar_alocacao`, `processos` |
+| `registrar_metrica`, `historico_metrica`, `metricas_por_tipo`, `ultima_metrica` | `registrar_doacao_sangue`, `estoque_sangue`, `bolsas_compativeis`, `utilizar_bolsa` |
+| `ficha`, `linha_do_tempo`, `prontuario` | `executar_manutencao`, `verificar_integridade` |
 
-### Criterio de compatibilidade
+Padrão de uso na CLI:
 
-Um orgao e compativel com um receptor quando:
+```python
+from backend.diario.servico import DiarioService
+from backend.central.servico import CentralService
+from backend.erros import ErroDeNegocio
 
-1. o **tipo de orgao** aguardado na fila e o mesmo do orgao captado;
-2. o **tipo sanguineo ABO** do doador pode doar para o do receptor
-   (O -> todos; A -> A e AB; B -> B e AB; AB -> AB);
-3. o **fator RH** e compativel (negativo doa para ambos; positivo somente para
-   positivo);
-4. o orgao esta `DISPONIVEL` e o receptor esta `AGUARDANDO`.
+with DiarioService() as diario, CentralService() as central:
+    try:
+        resultado = central.selecionar_receptores(int(input("Id do órgão: ")))
+        ...
+    except ErroDeNegocio as erro:
+        print("Erro:", erro)
+```
 
-As regras 2 e 3 estao armazenadas nas tabelas `compat_abo` e `compat_rh` e sao
-aplicadas pela view `vw_compatibilidade`, ou seja, a compatibilidade e resolvida
-pelo proprio banco. A ordem sugerida de alocacao e prioridade
-(EMERGENCIA > ALTA > NORMAL) e, em caso de empate, maior tempo de espera.
+O `demo_backend.py` mostra cada método em uso e tem uma função `tabela()` que a CLI pode reaproveitar.
 
-A efetivacao do transplante roda em uma **transacao**: insere em `transplante`
-e atualiza o status do orgao e da fila; qualquer falha desfaz tudo
-(`ROLLBACK`).
+## Adições em relação ao DER original
 
----
-
-## Recriar os bancos
-
-- Terminal: menu *Manutencao do banco -> Recriar banco*.
-- Interface grafica: menu *Arquivo -> Recriar banco...*.
-- Manualmente: apague os arquivos de `data/` e execute o projeto novamente.
+- Tabela `compatibilidade_abo`: a regra ABO é guardada como dado.
+- ENUMs `tipo_sanguineo` e `fator_rh` também na Central, para comparar os valores lidos do Diário.
+- Índices únicos parciais:
+  - um receptor não pode estar duas vezes aguardando o mesmo órgão;
+  - o 1:1 entre órgão e alocação vale só para alocações não canceladas.

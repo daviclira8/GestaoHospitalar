@@ -1,6 +1,6 @@
-# Bancos de dados gerados na execucao (recriados a partir dos scripts .sql)
-data/*.db
-
-# Python
+.env
 __pycache__/
-*.py[cod]
+*.pyc
+.pytest_cache/
+.venv/
+venv/
