@@ -1,0 +1,146 @@
+Project diario_saude {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Sistema 1: Diário de Saúde Pessoal.
+  usuario.id é o identificador usado pela Central de Transplantes (outro banco, sem FK física).
+  '''
+}
+
+Enum sexo {
+  masculino
+  feminino
+  outro
+}
+
+Enum tipo_sanguineo {
+  A
+  B
+  AB
+  O
+}
+
+Enum fator_rh {
+  positivo
+  negativo
+}
+
+Enum gravidade_alergia {
+  leve
+  moderada
+  grave
+}
+
+Enum status_doenca {
+  ativa
+  controlada
+  curada
+}
+
+Table usuario {
+  id serial [pk]
+  nome varchar(120) [not null]
+  cpf char(11) [not null, unique, note: 'CHECK: 11 dígitos']
+  data_nascimento date [not null, note: 'CHECK: <= hoje']
+  sexo sexo [not null]
+  tipo_sanguineo tipo_sanguineo [note: 'Opcional até o exame de tipagem']
+  fator_rh fator_rh [note: 'CHECK: preenchido junto com tipo_sanguineo']
+  cidade varchar(80)
+  uf char(2) [note: 'CHECK: duas letras maiúsculas']
+  email varchar(120) [unique]
+  telefone varchar(20)
+  criado_em timestamp [not null, default: `now()`]
+  Note: 'Chave de integração: usuario.id é referenciado por doador, receptor e bolsa_sangue na Central.'
+}
+
+Table alergia {
+  id serial [pk]
+  usuario_id int [not null]
+  substancia varchar(100) [not null]
+  gravidade gravidade_alergia [not null]
+  observacao text
+
+  indexes {
+    (usuario_id, substancia) [unique, name: 'uq_alergia']
+  }
+}
+
+Table doenca {
+  id serial [pk]
+  nome varchar(120) [not null, unique]
+  cid varchar(10) [unique]
+  impede_doacao boolean [not null, default: false, note: 'Lido pela Central na triagem de doadores']
+}
+
+Table usuario_doenca {
+  id serial [pk]
+  usuario_id int [not null]
+  doenca_id int [not null]
+  data_diagnostico date [not null]
+  status status_doenca [not null, default: 'ativa']
+
+  indexes {
+    (usuario_id, doenca_id, data_diagnostico) [unique, name: 'uq_usuario_doenca']
+  }
+}
+
+Table vacina {
+  id serial [pk]
+  nome varchar(100) [not null]
+  fabricante varchar(100)
+
+  indexes {
+    (nome, fabricante) [unique, name: 'uq_vacina']
+  }
+}
+
+Table aplicacao_vacina {
+  id serial [pk]
+  usuario_id int [not null]
+  vacina_id int [not null]
+  data_aplicacao date [not null]
+  dose varchar(20) [not null]
+  lote varchar(30)
+
+  indexes {
+    (usuario_id, vacina_id, dose) [unique, name: 'uq_aplicacao']
+  }
+}
+
+Table consulta {
+  id serial [pk]
+  usuario_id int [not null]
+  data_hora timestamp [not null]
+  especialidade varchar(80) [not null]
+  profissional varchar(120)
+  local varchar(120)
+  observacoes text
+}
+
+Table exame {
+  id serial [pk]
+  usuario_id int [not null]
+  consulta_id int [note: 'Opcional: exame pedido em uma consulta']
+  tipo varchar(100) [not null]
+  data date [not null]
+  resultado text
+}
+
+Table metrica_saude {
+  id serial [pk]
+  usuario_id int [not null]
+  tipo varchar(50) [not null, note: 'Ex.: peso, glicemia, pressão']
+  valor numeric(8,2) [not null]
+  unidade varchar(20) [not null]
+  data_hora timestamp [not null, default: `now()`]
+}
+
+// Relacionamentos (cardinalidades)
+Ref: alergia.usuario_id > usuario.id [delete: cascade]
+Ref: usuario_doenca.usuario_id > usuario.id [delete: cascade]
+Ref: usuario_doenca.doenca_id > doenca.id [delete: restrict]
+Ref: aplicacao_vacina.usuario_id > usuario.id [delete: cascade]
+Ref: aplicacao_vacina.vacina_id > vacina.id [delete: restrict]
+Ref: consulta.usuario_id > usuario.id [delete: cascade]
+Ref: exame.usuario_id > usuario.id [delete: cascade]
+Ref: exame.consulta_id > consulta.id [delete: set null]
+Ref: metrica_saude.usuario_id > usuario.id [delete: cascade]

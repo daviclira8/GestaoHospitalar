@@ -8,3 +8,4 @@ senhas.txt
 
 # Configuracao local do editor
 .vscode/
+.env.nuvem

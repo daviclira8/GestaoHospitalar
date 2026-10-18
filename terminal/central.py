@@ -84,7 +84,7 @@ def doadores_cadastrar():
     usuario_id = escolher_usuario_diario()
     if usuario_id is None:
         return
-    tipo = ui.ler_opcao("Tipo de doador", ENUM["tipo_doador"])
+    tipo = ui.ler_opcao("Tipo de doador", ENUM["tipo_doador"]).lower()
     print()
     hospital_id = escolher_hospital()
     if hospital_id is None:
@@ -322,8 +322,9 @@ def _mostrar_selecao(resultado):
 
 def compat_selecionar():
     ui.secao("Selecionar receptores compativeis com um orgao")
-    print("  Criterios do backend: compatibilidade_abo + fator RH + tempo de")
-    print("  isquemia restante x tempo de transporte ate o hospital do receptor.")
+    print("  Criterios do backend: compatibilidade_abo (somente ABO; o fator RH")
+    print("  vale apenas para bolsas de sangue) + tempo de isquemia restante x")
+    print("  tempo de transporte ate o hospital do receptor.")
     orgao_id = escolher(SERVICO.orgaos_disponiveis(), "orgao_id", "ID do orgao",
                         colunas=COLUNAS_ORGAO, titulos=TITULOS_ORGAO,
                         vazio="Nenhum orgao disponivel.")
