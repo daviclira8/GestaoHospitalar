@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 venv/
 senhas.txt
+
+# Configuracao local do editor
+.vscode/
