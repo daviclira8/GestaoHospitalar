@@ -7,8 +7,9 @@ Aplicação com dois bancos PostgreSQL integrados pelo identificador do usuário
 - **Central Hospitalar**: doadores, receptores, fila de espera, órgãos,
   compatibilidade, alocações e estoque de sangue.
 
-O backend e os testes automatizados são os da branch `main`. A interface
-Tkinter e a API/front web mantidos nesta branch usam os mesmos serviços.
+Há três interfaces (menus de terminal, janela Tkinter e front web com API
+HTTP), todas sobre os mesmos serviços do backend e cobertas pelos mesmos testes
+automatizados.
 
 ## Configuração
 
@@ -30,8 +31,12 @@ instalação. `PGHOST=127.0.0.1` evita diferenças de resolução IPv4/IPv6 em
 python criar_bancos.py
 ```
 
-O script recria `diario_saude` e `central_transplantes`. Não o execute se
-precisar preservar dados existentes.
+O script recria `diario_saude` e `central_transplantes` (nomes de `DIARIO_DB` e
+`CENTRAL_DB`) no servidor das variáveis **sem prefixo** (`PGHOST`, `PGUSER`...)
+e pede confirmação; `python criar_bancos.py --sim` pula a pergunta. Não o
+execute se precisar preservar dados existentes. As variáveis com prefixo
+`DIARIO_` e `CENTRAL_` têm prioridade sobre as sem prefixo na conexão de cada
+sistema; veja `.env.exemplo`.
 
 ## Executar
 
@@ -53,7 +58,8 @@ Front web e API HTTP:
 python API\api.py
 ```
 
-Abra `http://localhost:8000`. O servidor atende somente em `127.0.0.1`.
+Abra `http://localhost:8000` (outra porta: `python API\api.py 8080`). O
+servidor atende somente em `127.0.0.1`.
 
 Menus de terminal (também acessíveis pelo `main.py`):
 
@@ -69,7 +75,19 @@ python demo_backend.py
 python -m pytest -q
 ```
 
-Os testes usam bancos de teste separados e as credenciais PostgreSQL de `.env`.
+`demo_backend.py` recria os bancos sem pedir confirmação antes de rodar
+(`--sem-recriar` usa os dados atuais, que precisam estar no estado inicial).
+Os testes usam bancos separados (`diario_saude_teste` e
+`central_transplantes_teste`) e as credenciais sem prefixo de `.env`.
+
+Operações SQL de exemplo (as alterações ficam numa transação desfeita com
+`ROLLBACK` no final; os scripts esperam os dados iniciais, então rode
+`criar_bancos.py` antes se tiver usado o demo):
+
+```bat
+psql -h 127.0.0.1 -U postgres -d diario_saude -f sql\diario\03_operacoes.sql
+psql -h 127.0.0.1 -U postgres -d central_transplantes -f sql\central\03_operacoes.sql
+```
 
 ## Estrutura
 
@@ -81,6 +99,7 @@ terminal/      Menus interativos de terminal dos dois sistemas
 gui.py         Interface gráfica (abas em backend/*/interface.py)
 main.py        Menu inicial: escolhe a interface
 sql/           Esquemas, dados de exemplo e operações SQL
+docs/          Modelo de dados (DER.md) e arquivos do DER em docs/der/
 tests/         Testes do backend
 criar_bancos.py  Criação e povoamento dos bancos
 ```

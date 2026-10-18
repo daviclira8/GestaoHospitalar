@@ -1,0 +1,148 @@
+Project central_transplantes {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Sistema 2: Central Hospitalar de Transplantes e Doação de Órgãos e Sangue.
+  Os campos usuario_id apontam para diario_saude.usuario.id (outro banco, sem FK física).
+  A aplicação lê nome, tipagem e doenças do Diário em modo somente leitura.
+  '''
+}
+
+Enum tipo_doador {
+  vivo
+  falecido
+}
+
+Enum status_doador {
+  apto
+  inapto
+}
+
+Enum status_orgao {
+  disponivel
+  alocado
+  descartado
+}
+
+Enum status_fila {
+  aguardando
+  transplantado
+  removido
+}
+
+Enum status_logistica {
+  em_transporte
+  entregue
+  realizado
+  cancelado
+}
+
+Enum status_bolsa {
+  disponivel
+  utilizada
+  vencida
+}
+
+Enum tipo_sanguineo {
+  A
+  B
+  AB
+  O
+}
+
+Enum fator_rh {
+  positivo
+  negativo
+}
+
+Table hospital {
+  id serial [pk]
+  nome varchar(120) [not null, unique]
+  cidade varchar(80) [not null]
+  uf char(2) [not null]
+  latitude numeric(9,6) [not null]
+  longitude numeric(9,6) [not null]
+}
+
+Table tipo_orgao {
+  id serial [pk]
+  nome varchar(50) [not null, unique]
+  tempo_max_isquemia_horas int [not null, note: 'CHECK: > 0. Usado na logística']
+  permite_doador_vivo boolean [not null, default: false]
+}
+
+Table doador {
+  id serial [pk]
+  usuario_id int [not null, unique, note: 'Integração: diario_saude.usuario.id']
+  tipo tipo_doador [not null]
+  hospital_id int [not null]
+  data_cadastro date [not null, default: `CURRENT_DATE`]
+  status status_doador [not null, default: 'apto']
+}
+
+Table orgao_disponivel {
+  id serial [pk]
+  doador_id int [not null]
+  tipo_orgao_id int [not null]
+  hospital_id int [not null, note: 'Hospital da captação']
+  data_hora_captacao timestamp [not null, default: `now()`]
+  status status_orgao [not null, default: 'disponivel']
+  Note: 'Gatilho trg_valida_orgao: bloqueia doador inapto e órgão que não aceita doador vivo.'
+}
+
+Table receptor {
+  id serial [pk]
+  usuario_id int [not null, unique, note: 'Integração: diario_saude.usuario.id']
+  hospital_id int [not null]
+  data_cadastro date [not null, default: `CURRENT_DATE`]
+}
+
+Table fila_espera {
+  id serial [pk]
+  receptor_id int [not null]
+  tipo_orgao_id int [not null]
+  data_entrada timestamp [not null, default: `now()`]
+  urgencia int [not null, note: 'CHECK: 1 a 5']
+  status status_fila [not null, default: 'aguardando']
+  Note: 'Índice único parcial uq_fila_ativa: (receptor_id, tipo_orgao_id) WHERE status = aguardando.'
+}
+
+Table alocacao {
+  id serial [pk]
+  orgao_id int [not null]
+  fila_id int [not null]
+  data_hora timestamp [not null, default: `now()`]
+  status_logistica status_logistica [not null, default: 'em_transporte']
+  Note: 'Índices únicos parciais em orgao_id e fila_id WHERE status_logistica <> cancelado: um órgão ativo por receptor e vice-versa (1:0..1).'
+}
+
+Table bolsa_sangue {
+  id serial [pk]
+  usuario_id int [not null, note: 'Integração: doador de sangue em diario_saude.usuario.id']
+  hospital_id int [not null]
+  data_coleta date [not null, default: `CURRENT_DATE`]
+  data_validade date [not null, note: 'CHECK: > data_coleta']
+  volume_ml int [not null, note: 'CHECK: 200 a 600']
+  status status_bolsa [not null, default: 'disponivel']
+}
+
+Table compatibilidade_abo {
+  tipo_doador tipo_sanguineo [not null]
+  tipo_receptor tipo_sanguineo [not null]
+
+  indexes {
+    (tipo_doador, tipo_receptor) [pk]
+  }
+  Note: 'Regra ABO guardada como dado (O doa para todos; A para A e AB; B para B e AB; AB para AB).'
+}
+
+// Relacionamentos (cardinalidades)
+Ref: doador.hospital_id > hospital.id
+Ref: orgao_disponivel.hospital_id > hospital.id
+Ref: receptor.hospital_id > hospital.id
+Ref: bolsa_sangue.hospital_id > hospital.id
+Ref: orgao_disponivel.doador_id > doador.id
+Ref: orgao_disponivel.tipo_orgao_id > tipo_orgao.id
+Ref: fila_espera.receptor_id > receptor.id
+Ref: fila_espera.tipo_orgao_id > tipo_orgao.id
+Ref: alocacao.orgao_id > orgao_disponivel.id
+Ref: alocacao.fila_id > fila_espera.id
